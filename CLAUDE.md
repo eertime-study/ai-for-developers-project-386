@@ -28,27 +28,70 @@
 ## Структура репозитория
 
 ```
-├── .github/workflows/hexlet-check.yml   # CI от Hexlet — НЕ ПРАВИТЬ
-├── spec/main.tsp                        # TypeSpec API-контракт (единственный источник правды)
+├── .github/workflows/hexlet-check.yml      # CI от Hexlet — НЕ ПРАВИТЬ
+├── .claude/launch.json                     # конфиг preview-MCP (prism-mock + frontend)
+├── spec/
+│   ├── main.tsp                            # TypeSpec API-контракт (источник правды)
+│   ├── tspconfig.yaml                      # emitter @typespec/openapi3
+│   ├── package.json                        # scripts: compile, mock
+│   └── tsp-output/@typespec/openapi3/      # сгенерированный openapi.yaml (gitignored)
+├── frontend/                               # Vite + React + TS + shadcn/ui
+│   ├── src/
+│   │   ├── api/{schema.ts,client.ts,queries.ts}
+│   │   ├── components/{ui,OwnerHeader,EventTypeCard,SlotGrid,SlotLegend,BookingsTable,EventTypeCreateForm,AppShell}.tsx
+│   │   ├── routes/{EventTypesListPage,SlotPickerPage,BookingFormPage,BookingSuccessPage,AdminPage,NotFoundPage}.tsx
+│   │   └── lib/{time.ts,utils.ts}
+│   └── package.json                        # scripts: dev, build, gen:api
 ├── README.md
 └── CLAUDE.md
 ```
 
 `spec/main.tsp` — основной артефакт. Любые изменения поведения системы должны сначала отражаться там, потом — в реализации.
 
+### Локальный запуск
+
+```
+cd spec && npm install && npm run compile && npm run mock    # Prism mock на :4010
+cd frontend && npm install --legacy-peer-deps && npm run gen:api && npm run dev   # Vite на :5173
+```
+
+`.npmrc` в `frontend/` уже включает `legacy-peer-deps=true` (нужно из-за расхождения TS 6 в Vite 8 vs TS 5 в `openapi-typescript`).
+
 ## Технические договорённости
 
 Эти решения зафиксированы; не предлагать обратное без явной просьбы пользователя.
 
-1. **Минимальный тулинг TypeSpec на этом этапе.** В репо лежит только `spec/main.tsp`. Никаких `package.json`, `tspconfig.yaml`, `node_modules`, генерации `openapi.yaml`. Если на следующем шаге задание явно потребует OpenAPI — тогда поднять `@typespec/openapi3`.
+1. **TypeSpec → OpenAPI → openapi-typescript.** Спецификация компилируется через эмиттер `@typespec/openapi3` (v0.65.x — старая ветка нужна, чтобы синтаксис `@service({...})` в `main.tsp` остался без изменений). Сгенерированный `openapi.yaml` скармливается `openapi-typescript` (на стороне фронта) и Prism (как mock).
 
-2. **Не вводить выдуманных бизнес-правил.** Не добавлять рабочие часы, не ограничивать формат `EventType.id` через `@pattern`, не накладывать `@minLength`/`@maxLength` на поля. Если правила нет в задании Hexlet — его в контракте быть не должно.
+2. **Не вводить выдуманных бизнес-правил.** Не добавлять рабочие часы, не ограничивать формат `EventType.id` через `@pattern`, не накладывать `@minLength`/`@maxLength` на поля. Если правила нет в задании Hexlet — его в контракте быть не должно. Фронт **не вычисляет** статусы слотов: берёт `slot.status` из API как есть.
 
 3. **JSDoc-стиль документации в `.tsp` сохранять.** Не переписывать в `@doc(...)` декораторы.
 
 4. **`outside_window` — это про 14-дневное окно, и только.** Не интерпретировать как «нерабочее время».
 
-5. **Стек реализации (фронт/бэк) ещё не выбран.** Решение откладывается до соответствующего шага задания.
+5. **Стек фронта зафиксирован (шаг 2):** Vite + React 19 + TypeScript + shadcn/ui (preset `radix-nova`) + React Router v6 + TanStack Query + react-hook-form + zod. Mock API — Prism. Стек бэка пока открыт.
+
+6. **Часовой пояс.** Все даты в API — `utcDateTime`. Форматирование на фронте — через `Intl.DateTimeFormat` с явным `timeZone` (см. [frontend/src/lib/time.ts](frontend/src/lib/time.ts)). Никаких `new Date().toLocaleString()` без таймзоны.
+
+## Отладка и работа с ошибками
+
+При возникновении ошибки не чинить симптом на поверхности. Сначала найти корневую причину, потом править её.
+
+Алгоритм:
+1. Прочитать ошибку и контекст целиком (стек, соседние логи, последние изменения).
+2. Воспроизвести проблему — не догадываться по тексту ошибки.
+3. Пройти по цепочке: данные → типы → конфиг → зависимости → API-контракт (`spec/main.tsp`). Симптом во фронте часто = неточность в контракте.
+4. Чинить источник, а не падающую строку.
+5. Проверить фикс: типы, билд, релевантные тесты, ручной прогон сценария.
+
+Анти-паттерны (так делать **нельзя**, даже если "работает"):
+- ослаблять типы (`any`, `as unknown as`, удаление `strict`-настроек);
+- глушить исключения пустым `catch`, подавлять варнинги;
+- удалять/скипать падающий тест вместо разбора, что он ловит;
+- увеличивать таймауты, добавлять ретраи, хардкодить значения, чтобы обойти проблему;
+- лепить локальный воркэраунд, если корневая причина лежит вне задачи — вместо этого явно сообщить пользователю и согласовать скоуп.
+
+После нетривиального фикса — короткая (1–3 строки) сводка: в чём была корневая причина и что изменилось. Если фикс очевиден из диффа — сводка не нужна.
 
 ## Рабочий процесс
 
@@ -60,4 +103,5 @@
 ## Прогресс
 
 - **Шаг 1 — TypeSpec-спецификация:** ✅ сдан 2026-05-26. Контракт `spec/main.tsp` v1.2.0 (commit `f0989e3`). Покрывает все обязательные сценарии задания шага 1 (владелец + гость, 14-дневное окно, защита от двойного бронирования).
-- Шаги 2–6 — ждут старта.
+- **Шаг 2 — Фронтенд:** ✅ собран 2026-05-27. Vite-приложение в [frontend/](frontend/), 6 роутов (гость + админка), типы сгенерированы из `spec/main.tsp` через openapi-typescript, mock через Prism. Все 4 экрана драфта A (минималистичный SaaS) реализованы. `npm run build` зелёный.
+- Шаги 3–6 — ждут старта.
