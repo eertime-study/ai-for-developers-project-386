@@ -1,0 +1,6 @@
+.DS_Store
+
+# Claude Code session artefacts (plans, scratch). launch.json — это конфиг
+# preview-MCP для команды, его мы коммитим.
+.claude/*
+!.claude/launch.json
