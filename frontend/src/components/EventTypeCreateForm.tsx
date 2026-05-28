@@ -29,7 +29,7 @@ export function EventTypeCreateForm() {
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitSuccessful },
+    formState: { errors, isSubmitSuccessful, isDirty },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,7 +66,7 @@ export function EventTypeCreateForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
       <h2 className="text-sm font-medium text-foreground">Создать тип встречи</h2>
 
-      {create.isSuccess ? (
+      {create.isSuccess && !isDirty ? (
         <Alert>
           <AlertTitle>Тип встречи создан</AlertTitle>
           <AlertDescription>
@@ -83,10 +83,11 @@ export function EventTypeCreateForm() {
           id="id"
           placeholder="consultation-30"
           aria-invalid={!!errors.id}
+          aria-describedby={errors.id ? 'id-error' : undefined}
           {...register('id')}
         />
         {errors.id ? (
-          <p className="text-xs text-destructive">{errors.id.message}</p>
+          <p id="id-error" className="text-xs text-destructive">{errors.id.message}</p>
         ) : null}
       </div>
 
@@ -98,10 +99,11 @@ export function EventTypeCreateForm() {
           id="title"
           placeholder="Консультация"
           aria-invalid={!!errors.title}
+          aria-describedby={errors.title ? 'title-error' : undefined}
           {...register('title')}
         />
         {errors.title ? (
-          <p className="text-xs text-destructive">{errors.title.message}</p>
+          <p id="title-error" className="text-xs text-destructive">{errors.title.message}</p>
         ) : null}
       </div>
 
@@ -114,10 +116,11 @@ export function EventTypeCreateForm() {
           rows={3}
           placeholder="30-минутная консультация по вашему запросу."
           aria-invalid={!!errors.description}
+          aria-describedby={errors.description ? 'description-error' : undefined}
           {...register('description')}
         />
         {errors.description ? (
-          <p className="text-xs text-destructive">{errors.description.message}</p>
+          <p id="description-error" className="text-xs text-destructive">{errors.description.message}</p>
         ) : null}
       </div>
 
@@ -130,10 +133,13 @@ export function EventTypeCreateForm() {
           type="number"
           min={1}
           aria-invalid={!!errors.durationInMinutes}
+          aria-describedby={errors.durationInMinutes ? 'durationInMinutes-error' : undefined}
           {...register('durationInMinutes', { valueAsNumber: true })}
         />
         {errors.durationInMinutes ? (
-          <p className="text-xs text-destructive">{errors.durationInMinutes.message}</p>
+          <p id="durationInMinutes-error" className="text-xs text-destructive">
+            {errors.durationInMinutes.message}
+          </p>
         ) : null}
       </div>
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { dayKey, formatDayMonth, formatWeekday, timeKey } from '@/lib/time'
 import type { components } from '@/api/schema'
@@ -51,7 +52,10 @@ export function SlotGrid({
 }) {
   const navigate = useNavigate()
   const { eventTypeId } = useParams()
-  const { days, times, matrix } = buildMatrix(slots, timeZone)
+  const { days, times, matrix } = useMemo(
+    () => buildMatrix(slots, timeZone),
+    [slots, timeZone],
+  )
 
   if (days.length === 0 || times.length === 0) {
     return (
@@ -100,7 +104,7 @@ export function SlotGrid({
                         )
                       }
                       aria-label={`${formatDayMonth(slot.startTime, timeZone)} ${timeKey(slot.startTime, timeZone)} (${slot.status})`}
-                      className={`h-7 w-full rounded border text-[10px] transition ${cellStyles[slot.status]}`}
+                      className={`h-7 w-full rounded-md border text-[10px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${cellStyles[slot.status]}`}
                     >
                       <span className="sr-only">{slot.status}</span>
                     </button>

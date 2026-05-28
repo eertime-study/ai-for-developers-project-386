@@ -153,10 +153,13 @@ export default function BookingFormPage() {
               id="guestName"
               autoComplete="name"
               aria-invalid={!!errors.guestName}
+              aria-describedby={errors.guestName ? 'guestName-error' : undefined}
               {...register('guestName')}
             />
             {errors.guestName ? (
-              <p className="text-xs text-destructive">{errors.guestName.message}</p>
+              <p id="guestName-error" className="text-xs text-destructive">
+                {errors.guestName.message}
+              </p>
             ) : null}
           </div>
 
@@ -169,10 +172,13 @@ export default function BookingFormPage() {
               type="email"
               autoComplete="email"
               aria-invalid={!!errors.guestEmail}
+              aria-describedby={errors.guestEmail ? 'guestEmail-error' : undefined}
               {...register('guestEmail')}
             />
             {errors.guestEmail ? (
-              <p className="text-xs text-destructive">{errors.guestEmail.message}</p>
+              <p id="guestEmail-error" className="text-xs text-destructive">
+                {errors.guestEmail.message}
+              </p>
             ) : null}
           </div>
 

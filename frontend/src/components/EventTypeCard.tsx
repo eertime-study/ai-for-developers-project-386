@@ -8,9 +8,9 @@ export function EventTypeCard({ eventType }: { eventType: EventType }) {
   return (
     <Link
       to={`/event-types/${encodeURIComponent(eventType.id)}`}
-      className="group flex items-center gap-4 rounded-lg border border-border bg-background p-4 transition hover:border-foreground/30 hover:shadow-sm"
+      className="group flex items-center gap-4 rounded-xl border border-border bg-background p-4 transition-all hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
         <CalendarRange className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
