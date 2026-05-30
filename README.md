@@ -136,7 +136,7 @@ docker run --rm -p 8080:8080 -e PORT=8080 call-calendar
 
 Образ слушает `process.env.PORT` (по умолчанию 3000 без env, Render выставляет своё значение автоматически). Внутри образа уже выставлены `API_PREFIX=/api`, `STATIC_DIR=/app/frontend-dist`, `OPENAPI_SPEC_PATH=/app/openapi.yaml` — никаких дополнительных env-переменных для запуска не требуется.
 
-**Публичный URL:** _TBD — заполнится после первого успешного деплоя на Render._
+**Публичный URL:** https://ai-for-developers-project-386-isaw.onrender.com
 
 Render-конфигурация: Web Service из Dockerfile (Dockerfile path `./Dockerfile`, root directory пуст), health check path `/api/owner`, free tier. На локальный dev/E2E деплойная упаковка не влияет — backend сохраняет старое поведение (роуты на корне, CORS на localhost-портах), когда `API_PREFIX`/`STATIC_DIR` не заданы.
 
