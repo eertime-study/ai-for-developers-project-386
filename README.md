@@ -104,6 +104,24 @@ cd frontend && npm install --legacy-peer-deps && npm run gen:api && npm run dev
 > поднять Prism-мок, он отдаёт **случайные** данные (lorem ipsum, абсурдные даты) — это нормально
 > для контрактного мока.
 
+### E2E (Playwright)
+
+Интеграционные тесты в [e2e/](e2e/) гоняют **реальный** Chromium против **реального** бэкенда (Fastify, in-memory) и **реального** прод-сборки фронтенда (`vite preview`). Сценарий описан в [e2e/scenarios.md](e2e/scenarios.md); главный — гость бронирует первый available-слот и убеждается, что слот стал `booked` в сетке.
+
+Бэкенд в e2e стартует с фиксированным clock через env (`FIXED_CLOCK_ISO=2026-06-01T09:00:00Z`) — без этого 14-дневная сетка слотов и набор статусов меняются между прогонами.
+
+Полная последовательность от чистого клона (`npm ci` — ближе к CI и опирается на закоммиченные `package-lock.json`):
+
+```sh
+cd spec     && npm ci && npm run compile
+cd ../backend  && npm ci && npm run gen:api && npm run build
+cd ../frontend && npm ci --legacy-peer-deps && npm run gen:api && npm run build
+cd ../e2e      && npm ci && npx playwright install chromium
+cd ../e2e      && npm test
+```
+
+`webServer` в [e2e/playwright.config.ts](e2e/playwright.config.ts) сам поднимает backend (`:3000`) и frontend preview (`:4173`) — отдельных терминалов не нужно. Для интерактивной отладки — `npm run test:ui`. CI-воркфлоу: [.github/workflows/e2e.yml](.github/workflows/e2e.yml); при падении на ветке артефакты `playwright-report` и `test-results` (traces, screenshots) доступны 7 дней.
+
 ### Полезные скрипты
 
 | Команда | Где | Назначение |
@@ -113,6 +131,10 @@ cd frontend && npm install --legacy-peer-deps && npm run gen:api && npm run dev
 | `npm run gen:api` | `frontend/` | Регенерация типов из контракта (`schema.ts`) |
 | `npm run dev` | `frontend/` | Dev-сервер Vite на :5173 |
 | `npm run build` | `frontend/` | Прод-сборка (`tsc -b && vite build`) |
+| `npm run preview` | `frontend/` | Прод-сборка на :4173 (используется e2e) |
 | `npm run dev` | `backend/` | Бэкенд (Fastify) на :3000 |
+| `npm start` | `backend/` | Бэкенд из `dist/` (используется e2e) |
 | `npm test` | `backend/` | Тесты бэкенда (vitest) |
 | `npm run gen:api` | `backend/` | Регенерация типов бэкенда из контракта |
+| `npm test` | `e2e/` | Playwright e2e тесты (поднимает backend+frontend сам) |
+| `npm run test:ui` | `e2e/` | Playwright UI для отладки тестов |
