@@ -122,6 +122,24 @@ cd ../e2e      && npm test
 
 `webServer` в [e2e/playwright.config.ts](e2e/playwright.config.ts) сам поднимает backend (`:3000`) и frontend preview (`:4173`) — отдельных терминалов не нужно. Для интерактивной отладки — `npm run test:ui`. CI-воркфлоу: [.github/workflows/e2e.yml](.github/workflows/e2e.yml); при падении на ветке артефакты `playwright-report` и `test-results` (traces, screenshots) доступны 7 дней.
 
+### Docker и деплой
+
+Прод-сборка упакована в один Docker-образ: Fastify раздаёт собранный SPA из [frontend/dist](frontend/) и обслуживает API под префиксом `/api/*` — это даёт одну точку входа на Render, без CORS и без второго сервиса.
+
+Сборка и локальный прогон:
+
+```sh
+docker build -t call-calendar .
+docker run --rm -p 8080:8080 -e PORT=8080 call-calendar
+# открыть http://localhost:8080/
+```
+
+Образ слушает `process.env.PORT` (по умолчанию 3000 без env, Render выставляет своё значение автоматически). Внутри образа уже выставлены `API_PREFIX=/api`, `STATIC_DIR=/app/frontend-dist`, `OPENAPI_SPEC_PATH=/app/openapi.yaml` — никаких дополнительных env-переменных для запуска не требуется.
+
+**Публичный URL:** _TBD — заполнится после первого успешного деплоя на Render._
+
+Render-конфигурация: Web Service из Dockerfile (Dockerfile path `./Dockerfile`, root directory пуст), health check path `/api/owner`, free tier. На локальный dev/E2E деплойная упаковка не влияет — backend сохраняет старое поведение (роуты на корне, CORS на localhost-портах), когда `API_PREFIX`/`STATIC_DIR` не заданы.
+
 ### Полезные скрипты
 
 | Команда | Где | Назначение |
@@ -138,3 +156,5 @@ cd ../e2e      && npm test
 | `npm run gen:api` | `backend/` | Регенерация типов бэкенда из контракта |
 | `npm test` | `e2e/` | Playwright e2e тесты (поднимает backend+frontend сам) |
 | `npm run test:ui` | `e2e/` | Playwright UI для отладки тестов |
+| `docker build -t call-calendar .` | корень | Прод-образ (один контейнер: API под `/api/*` + SPA) |
+| `docker run --rm -p 8080:8080 -e PORT=8080 call-calendar` | корень | Локальный прогон образа на :8080 |
