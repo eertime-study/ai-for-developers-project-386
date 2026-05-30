@@ -82,6 +82,7 @@ cd frontend && npm install --legacy-peer-deps && npm run gen:api && npm run dev 
 6. **Часовой пояс.** Все даты в API — `utcDateTime`. Форматирование на фронте — через `Intl.DateTimeFormat` с явным `timeZone` (см. [frontend/src/lib/time.ts](frontend/src/lib/time.ts)). Никаких `new Date().toLocaleString()` без таймзоны.
 
 7. **Интеграционные тесты (Playwright).** Живут в [e2e/tests/](e2e/) (`*.spec.ts`), конфиг — [e2e/playwright.config.ts](e2e/playwright.config.ts). Правила:
+   - **Когда обязательно прогонять локально перед коммитом:** при правке `spec/main.tsp`, `backend/src/**` или `frontend/src/**` — запустить `npm test --prefix e2e` (бэк и фронт должны быть пересобраны: `npm run build` в backend/ и frontend/, а контракт — `npm run --prefix spec compile` + `gen:api`). Если тест падает — чинить корневую причину, а не коммитить «потом разберусь». CI всё равно перепроверит, но локальный прогон ловит проблему до push'а.
    - Селекторы только семантические: `getByRole`, `getByLabel`, `getByText`, `#id` для форм. Не цепляться к CSS-классам shadcn — они нестабильны и могут меняться при апдейтах темы.
    - Слоты выбираются по `aria-label` сетки в формате `«DD месяц HH:MM (status)»` (см. [frontend/src/components/SlotGrid.tsx](frontend/src/components/SlotGrid.tsx)).
    - Бэкенд в e2e ВСЕГДА стартует с `FIXED_CLOCK_ISO` (см. [backend/src/server.ts](backend/src/server.ts) и [backend/src/clock.ts](backend/src/clock.ts)) — иначе 14-дневное окно и расположение available-слотов плавают между прогонами.
